@@ -198,7 +198,7 @@ stock ObserveArrayPtr(addr, func) {
 // This is a dangerous assumption and will most likely lead to false positives, thus:
 // TODO: add runtime checks to recover gracefully from false positives
 public ObArrayScan_FoundCallback(m[CodeScanner]) {
-	static Opcode:s_prev_op, s_prev_cip;
+	static s_prev_cip;
 
 	new cip = m[CodeScanMatch_cip];
 	new stk = m[CodeScanMatch_stack];
@@ -220,7 +220,7 @@ public ObArrayScan_FoundCallback(m[CodeScanner]) {
 			s_InPossibleAssignment = false;
 		} else switch (op) {
 			case OP_STOR_I: {
-				InstallArrayHook(m, s_prev_op, s_prev_cip);
+				InstallArrayHook(m, s_prev_cip);
 				s_InPossibleAssignment = false;
 			}
 			case OP_RETN, OP_RET: {
@@ -229,11 +229,10 @@ public ObArrayScan_FoundCallback(m[CodeScanner]) {
 		}
 	}
 
-	s_prev_op = op;
 	s_prev_cip = cip;
 }
 
-static stock InstallArrayHook(m[CodeScanner], Opcode:prev_op, prev_cip) {
+static stock InstallArrayHook(m[CodeScanner], prev_cip) {
 	new dat = s_AmxHdr[AMX_HDR_DAT];
 	new cod = s_AmxHdr[AMX_HDR_COD];
 	new cip = m[CodeScanMatch_cip];
