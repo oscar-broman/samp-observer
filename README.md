@@ -54,6 +54,14 @@ public InstallObservers() {
 
 ```
 
+## Usage and requirements
+
+You need the [amx_assembly](http://github.com/Zeex/amx_assembly) lib. Simply place it with your include files, along with samp-observer, then include it like this:
+
+```SourcePawn
+#include <samp-observer/observe>
+```
+
 ## How it's done
 
 The include will modify the AMX code to add the function call every time an observed var/array is modified.
