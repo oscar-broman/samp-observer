@@ -56,7 +56,7 @@ public InstallObservers() {
 
 ## Usage and requirements
 
-You need the [amx_assembly](http://github.com/Zeex/amx_assembly) lib. Simply place it with your include files, along with samp-observer, then include it like this:
+You need the [amx_assembly](http://github.com/zeex/amx_assembly) lib. Simply place it with your include files, along with samp-observer, then include it like this:
 
 ```SourcePawn
 #include <samp-observer/observe>
@@ -71,6 +71,10 @@ When you change an observed variable, the observer callback will be executed bef
 ## Compatibility
 
 This include is compatible with and without both crashdetect and the JIT plugin.
+
+Credits
+
+This would not be possible without Zeex's amx_assembly lib and Y-Less's contributions to it. Most importantly, the latest [codescanner](https://github.com/Zeex/amx_assembly/blob/master/codescan.inc) addition.
 
 ## Limitations
 
