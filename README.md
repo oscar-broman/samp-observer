@@ -72,7 +72,7 @@ When you change an observed variable, the observer callback will be executed bef
 
 This include is compatible with and without both crashdetect and the JIT plugin.
 
-Credits
+## Credits
 
 This would not be possible without Zeex's amx_assembly lib and Y-Less's contributions to it. Most importantly, the latest [codescanner](https://github.com/Zeex/amx_assembly/blob/master/codescan.inc) addition.
 
