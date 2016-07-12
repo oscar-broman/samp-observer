@@ -60,6 +60,20 @@ static stock ObInit() {
 	s_Base = GetAmxBaseAddress();
 	GetAmxHeader(s_AmxHdr);
 	s_Code = GetObCode();
+
+	new publics = GetNumPublics(s_AmxHdr);
+
+	for (new i = 0; i < publics; i++) {
+		new name[32];
+
+		if (GetPublicNameFromIndex(i, name) && !strcmp("dynR", name, _, 4)) {
+			// Register the dynamic var
+			CallLocalFunction(name, "");
+			name[3] = 'U';
+			// Set the initial first value
+			CallLocalFunction(name, "");
+		}
+	}
 }
 
 #define ObserveVar(%1,%2) \
@@ -317,6 +331,48 @@ static stock InstallArrayHook(m[CodeScanner], prev_cip) {
 	s_CodeOffset += ctx[AsmContext_buffer_offset];
 }
 
+#define dynamic%0\32;%1<-%0(%2) \
+	new %1; \
+	forward dynR%1(); \
+	public dynR%1() { \
+		DynamicObserveMulti(addressofex(dynU%1()), DOL(%2)); \
+	} \
+	forward dynU%1(...); \
+	public dynU%1(...) { \
+		%1 = dyn@%1(); \
+	} \
+	forward dyn@%1(...); \
+	public dyn@%1(...)
+
+// (a, b, ..) -> (ref(a), sizeof(a), ref(b), sizeof(b), ..)
+#define DOL(%1) \
+	@oaE:%1,@oaL:
+// Var list loop
+#define @oaI(%1) \
+	ref(%1),sizeof(%1)
+#define @oaP:%1||| \
+	@oaI(%1),@oaE:
+// Var list loop entry
+#define @oaE:%1, \
+	_:@oa0:@oa1:@oaPl:@oaP:%1|||
+// End of var list
+#define @oaPl:@oaP:%1|||@oaL: \
+	@oaI(%1)
+
+stock DynamicObserveMulti(func, ...) {
+	new args = numargs();
+	for (new i = 1; i < args; i += 2) {
+		new addr = getarg(i);
+		new size = getarg(i + 1);
+
+		if (size > 1) {
+			ObserveArrayPtr(addr, func);
+		} else {
+			ObserveVarPtr(addr, func);
+		}
+	}
+}
+
 forward InstallObservers();
 
 public OnGameModeInit() {
@@ -396,9 +452,9 @@ public InstallObservers() {
 
 	installed = true;
 
-	ObInit();
-
 	s_InObserveCallback = true;
+
+	ObInit();
 
 	#if defined OBS_InstallObservers
 		OBS_InstallObservers();

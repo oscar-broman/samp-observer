@@ -12,7 +12,22 @@ new g_TestString[32];
 new g_Array[5];
 new g_ArraySum = 0;
 
+new g_Var1, g_Var2, g_Var3[10];
+
+// The value of g_DynVar will update every time g_Var1/2/3 change
+dynamic g_DynVar <- (g_Var1, g_Var2, g_Var3) {
+	return g_Var1 + g_Var2 + g_Var3[1] + g_Var3[2];
+}
+
 main() {
+	// Changing these automatically update g_DynVar
+	g_Var1 = 1;
+	g_Var2 = 10;
+	g_Var3[1] = 100;
+	g_Var3[2] = 1000;
+
+	printf("g_DynVar = %d", g_DynVar);
+
 	// Now OnTestChange will be executed
 	g_Test = 789;
 
