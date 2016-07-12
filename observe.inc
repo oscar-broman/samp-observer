@@ -47,6 +47,7 @@ static stock
 	s_InObserveCallback = false,
 	s_Code,
 	s_CodeOffset = 0,
+	s_CodeOffsetAtStart,
 	s_Func,
 	s_AmxHdr[AMX_HDR],
 	s_Base,
@@ -92,6 +93,7 @@ stock ObserveVarPtr(addr, func) {
 	}
 
 	s_Func = func;
+	s_CodeOffsetAtStart = s_CodeOffset;
 
 	new scanner[CodeScanner];
 	CodeScanInit(scanner);
@@ -136,7 +138,7 @@ public ObModifyVar_FoundCallback(m[CodeScanner]) {
 	new ctx[AsmContext];
 
 	// Ignore matches inside the generated code
-	if (cip >= s_Code && cip < s_Code + OBSERVE_CODE_SIZE) {
+	if (cip >= s_Code + s_CodeOffsetAtStart && cip < s_Code + OBSERVE_CODE_SIZE - s_CodeOffsetAtStart) {
 		return;
 	}
 
@@ -217,6 +219,7 @@ stock ObserveArrayPtr(addr, func) {
 
 	s_Addr = addr;
 	s_Func = func;
+	s_CodeOffsetAtStart = s_CodeOffset;
 
 	CodeScanMatcherInit(csm, &ObArrayScan_FoundCallback);
 	csm[CodeScanMatcher_flags] = SCANNER_MATCH_ALL;
@@ -273,7 +276,7 @@ static stock InstallArrayHook(m[CodeScanner], prev_cip) {
 	new ctx[AsmContext];
 
 	// Ignore matches inside the generated code
-	if (cip >= s_Code && cip < s_Code + OBSERVE_CODE_SIZE) {
+	if (cip >= s_Code + s_CodeOffsetAtStart && cip < s_Code + OBSERVE_CODE_SIZE - s_CodeOffsetAtStart) {
 		return;
 	}
 
@@ -291,7 +294,7 @@ static stock InstallArrayHook(m[CodeScanner], prev_cip) {
 
 	new faddr = s_Base + cod + s_Func; // Absolute address to `func` in ObserveArrayPtr
 	new retaddr = s_Base + dat + cip + 4;
-	static prev;
+	static prev, tmp;
 
 	// Save the previous value i prev and modify the array
 	@emit push.pri
@@ -299,6 +302,10 @@ static stock InstallArrayHook(m[CodeScanner], prev_cip) {
 	@emit load.i
 	@emit stor.pri ref(prev)
 	@emit pop.pri
+	@emit stor.pri ref(tmp)
+	// This is used to support multiple observers on the same array
+	@emit const.pri s_Addr
+	@emit load.pri ref(tmp)
 	@emit stor.i
 	@emit push.pri
 	@emit push.alt
