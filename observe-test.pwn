@@ -17,7 +17,21 @@ observer Var2(p, c) {
 
 observer Var3(p, c) {
 	var4 = -c;
+	printf("var3a %d -> %d", p, c);
 }
+
+observer Var3b(p, c) {
+	printf("var3b %d -> %d", p, c);
+}
+
+observer Var3c(p, c) {
+	printf("var3c %d -> %d", p, c);
+}
+
+observer Var3d(p, c) {
+	printf("var3d %d -> %d", p, c);
+}
+
 
 new array_sum = 0;
 
@@ -26,9 +40,22 @@ observer ArrayChange(p, c, idx) {
 	array_sum += c - p;
 }
 
+observer ArrayChange2(p, c, idx) {
+	printf("array2[%d] %d -> %d", idx, p, c);
+}
+
+observer ArrayChange3(p, c, idx) {
+	printf("array3[%d] %d -> %d", idx, p, c);
+}
+
+observer FalsePositive(p, c, idx) {
+	printf("false_positive[%d] %d -> %d", idx, p, c);
+}
+
 new test = 11;
 new array[10];
 new other[5];
+new false_positive[3] = {11, 22, 33};
 
 main() {
 	new a = 11, b = 22, c = 33;
@@ -45,8 +72,14 @@ public InstallObservers() {
 	ObserveVar(var1, Var1);
 	ObserveVar(var2, Var2);
 	ObserveVar(var3, Var3);
+	ObserveVar(var3, Var3b);
+	ObserveVar(var3, Var3c);
+	ObserveVar(var3, Var3d);
 
+	ObserveArray(false_positive, FalsePositive);
 	ObserveArray(array, ArrayChange);
+	ObserveArray(array, ArrayChange2);
+	ObserveArray(array, ArrayChange3);
 }
 
 ObserverTest() {
@@ -86,6 +119,13 @@ ObserverTest() {
 	for (test = 0; test < 10; test++) {}
 
 	printf("done. test is %d", test);
+
+	#emit CONST.pri false_positive
+	#emit CONST.pri 0
+	#emit CONST.alt 0
+	#emit STOR.I
+
+	printf("falst_positive = %d, %d, %d", false_positive[0], false_positive[1], false_positive[2]);
 
 	assert a == 111;
 	assert b == 222;

@@ -29,7 +29,7 @@
 #include <amx_assembly/phys_memory>
 
 #if !defined OBSERVE_CODE_SIZE
-	#define OBSERVE_CODE_SIZE 4096
+	#define OBSERVE_CODE_SIZE 20480
 #endif
 
 #if OBSERVE_CODE_SIZE % 1024 != 0
@@ -44,6 +44,7 @@
 forward ObModifyVar_FoundCallback(m[CodeScanner]);
 
 static stock
+	s_ErrorHandler,
 	s_InObserveCallback = false,
 	s_Code,
 	s_CodeOffset = 0,
@@ -54,10 +55,12 @@ static stock
 	s_Stk,
 	s_Hea,
 	s_Addr,
+	s_Size,
 	s_InPossibleAssignment;
 
 
 static stock ObInit() {
+	s_ErrorHandler = GetPublicAddressFromName("ObHandleAsmError");
 	s_Base = GetAmxBaseAddress();
 	GetAmxHeader(s_AmxHdr);
 	s_Code = GetObCode();
@@ -129,6 +132,16 @@ stock ObserveVarPtr(addr, func) {
 	CodeScanRun(scanner);
 }
 
+public ObHandleAsmError(ctx[AsmContext]) {
+	if (AsmGetError(ctx) == ASM_ERROR_SPACE) {
+		printf("(observe.inc) ERROR: Buffer size exceeded. Increase OBSERVE_CODE_SIZE.");
+
+		#emit HALT 1
+	} else {
+		printf("AsmError in observe.inc: %d", _:AsmGetError(ctx));
+	}
+}
+
 public ObModifyVar_FoundCallback(m[CodeScanner]) {
 	static alt, pri;
 
@@ -144,6 +157,7 @@ public ObModifyVar_FoundCallback(m[CodeScanner]) {
 
 	// Write to the allocated space in COD
 	AsmInitPtr(ctx, s_Code + s_CodeOffset, OBSERVE_CODE_SIZE - s_CodeOffset);
+	AsmSetErrorHandler(ctx, s_ErrorHandler);
 
 	new val = ReadAmxMemory(cip + 4); // Get the variable's address (`addr` in ObserveVarPtr)
 	new faddr = s_Base + cod + s_Func; // Absolute address to `func` in ObserveVarPtr
@@ -205,9 +219,9 @@ public ObModifyVar_FoundCallback(m[CodeScanner]) {
 forward ObArrayScan_FoundCallback(m[CodeScanner]);
 
 #define ObserveArray(%1,%2) \
-	ObserveArrayPtr(ref(_:%1), addressofex(%2(%1[0],%1[0],0)))
+	ObserveArrayPtr(ref(_:%1), sizeof(%1), addressofex(%2(%1[0],%1[0],0)))
 
-stock ObserveArrayPtr(addr, func) {
+stock ObserveArrayPtr(addr, size, func) {
 	if (!s_InObserveCallback) {
 		printf("ERROR: ObserveArray must be called within InstallObservers.");
 		return;
@@ -219,6 +233,7 @@ stock ObserveArrayPtr(addr, func) {
 
 	s_Addr = addr;
 	s_Func = func;
+	s_Size = size;
 	s_CodeOffsetAtStart = s_CodeOffset;
 
 	CodeScanMatcherInit(csm, &ObArrayScan_FoundCallback);
@@ -232,8 +247,7 @@ stock ObserveArrayPtr(addr, func) {
 }
 
 // The code assumes that: CONST.alt/pri [array] followed by STOR.I means an array edit, iff the stack and heap never dips below their values at the time of the CONST.alt/pri op.
-// This is a dangerous assumption and will most likely lead to false positives, thus:
-// TODO: add runtime checks to recover gracefully from false positives
+// This is a dangerous assumption and will most likely lead to false positives, therefore a runtime check is added incase something is falsely detected as an edit.
 public ObArrayScan_FoundCallback(m[CodeScanner]) {
 	static s_prev_cip;
 
@@ -282,6 +296,7 @@ static stock InstallArrayHook(m[CodeScanner], prev_cip) {
 
 	// Write to the allocated space in COD
 	AsmInitPtr(ctx, s_Code + s_CodeOffset, OBSERVE_CODE_SIZE - s_CodeOffset);
+	AsmSetErrorHandler(ctx, s_ErrorHandler);
 
 	// We're in STOR.I so we'll need to use the previous opcode to fit the JUMP instruction
 	AsmEmitOpcode(ctx, UnrelocateOpcode(Opcode:ReadAmxMemory(prev_cip)));
@@ -294,7 +309,25 @@ static stock InstallArrayHook(m[CodeScanner], prev_cip) {
 
 	new faddr = s_Base + cod + s_Func; // Absolute address to `func` in ObserveArrayPtr
 	new retaddr = s_Base + dat + cip + 4;
+	new low = s_Addr, high = s_Addr + s_Size * 4;
 	static prev, tmp;
+
+	// Make sure it's a valid edit (also that it's within bounds)
+	// This will safeguard against any false positives in the code scanner
+	@emit push.pri
+	@emit push.alt
+	@emit move.pri
+	@emit const.alt low
+	@emit jless.rel 24
+	@emit const.alt high
+	@emit jgeq.rel 12
+	@emit jump.rel 20
+	@emit pop.alt
+	@emit pop.pri
+	@emit stor.i
+	@emit jump          retaddr
+	@emit pop.alt
+	@emit pop.pri
 
 	// Save the previous value i prev and modify the array
 	@emit push.pri
