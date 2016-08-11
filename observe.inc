@@ -24,9 +24,40 @@
 #define _INC_OBSERVE
 
 #include <a_samp>
-#include <amx_assembly/codescan>
-#include <amx_assembly/asm>
-#include <amx_assembly/phys_memory>
+
+#tryinclude "amx_assembly\codescan"
+#tryinclude "amx\codescan"
+#tryinclude "..\amx_assembly\codescan"
+#tryinclude "..\amx\codescan"
+
+#tryinclude "amx_assembly/codescan"
+#tryinclude "amx/codescan"
+#tryinclude "../amx_assembly/codescan"
+#tryinclude "../amx/codescan"
+
+#tryinclude "amx_assembly\asm"
+#tryinclude "amx\asm"
+#tryinclude "..\amx_assembly\asm"
+#tryinclude "..\amx\asm"
+
+#tryinclude "amx_assembly/asm"
+#tryinclude "amx/asm"
+#tryinclude "../amx_assembly/asm"
+#tryinclude "../amx/asm"
+
+#tryinclude "amx_assembly\phys_memory"
+#tryinclude "amx\phys_memory"
+#tryinclude "..\amx_assembly\phys_memory"
+#tryinclude "..\amx\phys_memory"
+
+#tryinclude "amx_assembly/phys_memory"
+#tryinclude "amx/phys_memory"
+#tryinclude "../amx_assembly/phys_memory"
+#tryinclude "../amx/phys_memory"
+
+#if !defined CODESCAN_INC
+	#error The latest amx_assembly is required. Get it here: github.com/Zeex/amx_assembly
+#endif
 
 #if !defined OBSERVE_CODE_SIZE
 	#define OBSERVE_CODE_SIZE 20480
@@ -216,6 +247,7 @@ public ObModifyVar_FoundCallback(m[CodeScanner]) {
 	s_CodeOffset += ctx[AsmContext_buffer_offset];
 }
 
+forward ObHandleAsmError(ctx[AsmContext]);
 forward ObArrayScan_FoundCallback(m[CodeScanner]);
 
 #define ObserveArray(%1,%2) \
