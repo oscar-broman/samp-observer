@@ -30,15 +30,30 @@
 #tryinclude "..\amx_assembly\codescan"
 #tryinclude "..\amx\codescan"
 
+#tryinclude "amx_assembly/codescan"
+#tryinclude "amx/codescan"
+#tryinclude "../amx_assembly/codescan"
+#tryinclude "../amx/codescan"
+
 #tryinclude "amx_assembly\asm"
 #tryinclude "amx\asm"
 #tryinclude "..\amx_assembly\asm"
 #tryinclude "..\amx\asm"
 
+#tryinclude "amx_assembly/asm"
+#tryinclude "amx/asm"
+#tryinclude "../amx_assembly/asm"
+#tryinclude "../amx/asm"
+
 #tryinclude "amx_assembly\phys_memory"
 #tryinclude "amx\phys_memory"
 #tryinclude "..\amx_assembly\phys_memory"
 #tryinclude "..\amx\phys_memory"
+
+#tryinclude "amx_assembly/phys_memory"
+#tryinclude "amx/phys_memory"
+#tryinclude "../amx_assembly/phys_memory"
+#tryinclude "../amx/phys_memory"
 
 #if !defined CODESCAN_INC
 	#error The latest amx_assembly is required. Get it here: github.com/Zeex/amx_assembly
