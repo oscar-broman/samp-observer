@@ -14,7 +14,7 @@
 	#error CODBUF_KB must be between 1 and 100
 #endif
 
-#include <amx_assembly/codescan>
+#include <amx\codescan>
 
 #define CBF(%1) %1
 
