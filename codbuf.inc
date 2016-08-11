@@ -14,7 +14,14 @@
 	#error CODBUF_KB must be between 1 and 100
 #endif
 
-#include <amx\codescan>
+#tryinclude "amx_assembly\codescan"
+#tryinclude "amx\codescan"
+#tryinclude "..\amx_assembly\codescan"
+#tryinclude "..\amx\codescan"
+
+#if !defined CODESCAN_INC
+	#error The latest amx_assembly is required. Get it here: github.com/Zeex/amx_assembly
+#endif
 
 #define CBF(%1) %1
 
